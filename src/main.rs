@@ -152,7 +152,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     }, ())?;
 
-    std::thread::sleep(std::time::Duration::from_millis(100000));
+    // Infinite loop to keep the program running
+    loop {
+        // You may want to introduce a sleep here to avoid excessive CPU usage
+        //std::thread::sleep(std::time::Duration::from(1));
+    }
 
-    Ok(())
+    // Ok(())
 }

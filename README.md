@@ -27,7 +27,7 @@ if message[0] == 153 && message[1] == 43 {
     println!("Current profile: {:?}", *profile);
 }
 ```
-This allows me to assign each button a different task across different profiles. The `Genshin` profile is an example of how one would use their MIDI in a video game. My MIDI only has 25 keys, which isn't enough to cover the entire music scale available in Genshin Impact, and so I have a way of switching the music key layout.
+This allows me to assign each button a different task across different profiles. The `Genshin` profile is an example of how one would use their MIDI in a video game. My MIDI only has 25 keys, which isn't enough to cover the entire music scale available in Genshin Impact, and so I have a way of switching the music key layout. It also has a button to simulate `Alt+S`, which is the shortcut for capturing the last minute of gameplay using SteelSeries Moments.
 
 Across all profiles, a few buttons are dedicated to music playback. One button opens Tidal, another is for play/pause, another to play the Previous Track, and another for Next Track:
 ```
