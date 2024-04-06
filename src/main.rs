@@ -9,9 +9,9 @@ use winapi::shared::winerror::*;
 use winapi::um::combaseapi::*;
 use winapi::um::endpointvolume::*;
 use winapi::um::mmdeviceapi::*;
-use winapi::shared::guiddef::*;
 use std::ptr::null_mut;
 mod profiles;
+use std::fmt;
 
 // Define IID_IMMDeviceEnumerator manually
 // This is the interface ID for IMMDeviceEnumerator
@@ -80,6 +80,38 @@ enum Profile {
     Genshin,
     Sky,
 }
+impl fmt::Display for Profile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            Profile::Default => "Default",
+            Profile::Genshin => "Genshin",
+            Profile::Sky => "Sky",
+        })
+    }
+}
+fn show_toast(title: &str, message: &str) {
+    let ps_script = format!(r#"
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+
+$textNodes = $template.GetElementsByTagName("text")
+$textNodes.Item(0).AppendChild($template.CreateTextNode("{title}")) > $null
+$textNodes.Item(1).AppendChild($template.CreateTextNode("{message}")) > $null
+
+$toast = [Windows.UI.Notifications.ToastNotification]::new($template)
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("MyMIDI")
+$notifier.Show($toast)
+"#, title = title, message = message);
+
+    Command::new("powershell")
+        .arg("-NoProfile")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-Command")
+        .arg(&ps_script)
+        .output()
+        .expect("Failed to execute process");
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut midi_in = MidiInput::new("midi_reader_input")?;
@@ -88,22 +120,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ports = midi_in.ports();
     let in_port = ports.get(0).ok_or("No MIDI input ports available.")?;
 
-    println!("Listening on {}", midi_in.port_name(in_port)?);
+    //println!("Listening on {}", midi_in.port_name(in_port)?);
 
     let current_profile = Arc::new(Mutex::new(Profile::Default));
 
     let profile_for_closure = current_profile.clone();
     let _conn_in = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
         let mut profile = profile_for_closure.lock().unwrap();
-        println!("{:?}", message);
+        //println!("{:?}", message);
         // Volume Control
         if message[0] == 176 && message[1] == 70 {
             let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-            println!("Setting system volume to: {}", midi_volume * 100.0);
-            match set_system_volume(midi_volume) {
-                Ok(_) => println!("Volume set successfully"),
-                Err(e) => println!("Failed to set volume: HRESULT {}", e),
-            }
+            //println!("Setting system volume to: {}", midi_volume * 100.0);
+            // match set_system_volume(midi_volume) {
+            //     Ok(_) => println!("Volume set successfully"),
+            //     Err(e) => println!("Failed to set volume: HRESULT {}", e),
+            // }
+            set_system_volume(midi_volume);
         }
         // Check if the MIDI message should trigger a profile change
         if message[0] == 153 && message[1] == 43 {
@@ -112,11 +145,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Profile::Genshin => Profile::Sky,
                 Profile::Sky => Profile::Default,
             };
-            println!("Current profile: {:?}", *profile);
+            let profile_name = format!("{}", *profile); // Convert the profile to a string
+            show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
+            //println!("Current profile: {}", profile_name); // Use if needed for debugging
         }
         if message[0] == 153 && message[1] == 39 {
             // Launch TIDAL
-            println!("Launching Tidal...");
+            //println!("Launching Tidal...");
             let _ = Command::new("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe")
                 .spawn()
                 .expect("TIDAL launch failed");
@@ -124,21 +159,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Go to the previous song on specific MIDI message
         if message[0] == 153 && message[1] == 36 {
-            println!("Playing previous song...");
+            //n!("Playing previous song...");
             let mut enigo = Enigo::new();
             enigo.key_click(Key::MediaPrevTrack);
         }
 
         if message[0] == 153 && message[1] == 37 {
             // Simulate play/pause key press
-            println!("Toggling play/pause...");
+            //println!("Toggling play/pause...");
             let mut enigo = Enigo::new();
             enigo.key_click(Key::MediaPlayPause);
         }
 
         // Go to the next song on specific MIDI message
         if message[0] == 153 && message[1] == 38 {
-            println!("Playing next song...");
+            //println!("Playing next song...");
             let mut enigo = Enigo::new();
             enigo.key_click(Key::MediaNextTrack);
         }
@@ -152,11 +187,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     }, ())?;
 
-    // Infinite loop to keep the program running
-    loop {
-        // You may want to introduce a sleep here to avoid excessive CPU usage
-        //std::thread::sleep(std::time::Duration::from(1));
-    }
+    std::thread::park();
 
-    // Ok(())
+    Ok(())
 }
