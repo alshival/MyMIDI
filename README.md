@@ -6,4 +6,4 @@ Originally, I had written this program in Python, but it was a resource hog, so 
 <img src="https://github.com/alshival/MyMIDI/blob/main/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/IMG_20240405_1927445722.jpg">
 TO-DO:
-1. Currently, if you start the app without a MIDI plugged in, it will wait until it detects a device. But if you disconnect the device while it is running, the port will remain open. Need to add observer that watches if the MIDI is disconnected and close the port then waits for a device to be plugged in.
+1. Currently, if you start the app without a MIDI plugged in, it will wait until it detects a device. But if you disconnect the device while it is running, the port will remain open. Need to add observer that watches if the MIDI is disconnected and closes the port then waits for a device to be plugged in.
