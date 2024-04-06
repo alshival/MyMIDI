@@ -1,7 +1,7 @@
+use std::{error::Error, thread, time::Duration};
 #[macro_use] extern crate lazy_static;
 use enigo::*;
 use midir::{MidiInput, Ignore};
-use std::error::Error;
 use std::sync::{Arc, Mutex};
 use std::process::Command;
 extern crate winapi;
@@ -114,95 +114,109 @@ $notifier.Show($toast)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut midi_in = MidiInput::new("midi_reader_input")?;
-    midi_in.ignore(Ignore::None);
+    loop {
+        // Recreate the MidiInput object each loop iteration to avoid ownership issues
+        let mut midi_in = MidiInput::new("midi_reader_input")?;
+        midi_in.ignore(Ignore::None);
 
+        let current_profile = Arc::new(Mutex::new(Profile::Default));
 
-    // Loop until a MIDI input port is available
-    let mut in_port = None;
-    while in_port.is_none() {
         let ports = midi_in.ports();
-        if !ports.is_empty() {
-            in_port = Some(ports[0].clone()); // Assuming we want the first available port
-        } else {
+        if ports.is_empty() {
             println!("No MIDI input ports available. Waiting for connection...");
-            std::thread::sleep(std::time::Duration::from_secs(5)); // Wait for 5 seconds before checking again
+            thread::sleep(Duration::from_secs(5));
+            continue; // Skip the rest of the loop and check again
         }
+
+        let in_port = &ports[0]; // Assuming we want the first available port
+        println!("Listening on {}", midi_in.port_name(in_port)?);
+        // Clone the Arc for use in the closure
+        let profile_for_closure = current_profile.clone();
+
+        // The `connect` method consumes `midi_in`, so it's not available after this call
+        let mut connection = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
+            let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
+            // Handle MIDI messages here
+            println!("Received MIDI message: {:?}", message);
+            // Volume Control
+            if message[0] == 176 && message[1] == 70 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                //println!("Setting system volume to: {}", midi_volume * 100.0);
+                // match set_system_volume(midi_volume) {
+                //     Ok(_) => println!("Volume set successfully"),
+                //     Err(e) => println!("Failed to set volume: HRESULT {}", e),
+                // }
+                match set_system_volume(midi_volume){
+                    Ok(_) => {},
+                    Err(_e) => {},
+                };
+            }
+            // Check if the MIDI message should trigger a profile change
+            if message[0] == 153 && message[1] == 43 {
+                *profile = match *profile {
+                    Profile::Default => Profile::Genshin,
+                    Profile::Genshin => Profile::Sky,
+                    Profile::Sky => Profile::Default,
+                };
+                let profile_name = format!("{}", *profile); // Convert the profile to a string
+                show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
+                //println!("Current profile: {}", profile_name); // Use if needed for debugging
+            }
+            if message[0] == 153 && message[1] == 39 {
+                // Launch TIDAL
+                //println!("Launching Tidal...");
+                let _ = Command::new("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe")
+                    .spawn()
+                    .expect("TIDAL launch failed");
+            }
+
+            // Go to the previous song on specific MIDI message
+            if message[0] == 153 && message[1] == 36 {
+                //n!("Playing previous song...");
+                let mut enigo = Enigo::new();
+                enigo.key_click(Key::MediaPrevTrack);
+            }
+
+            if message[0] == 153 && message[1] == 37 {
+                // Simulate play/pause key press
+                //println!("Toggling play/pause...");
+                let mut enigo = Enigo::new();
+                enigo.key_click(Key::MediaPlayPause);
+            }
+
+            // Go to the next song on specific MIDI message
+            if message[0] == 153 && message[1] == 38 {
+                //println!("Playing next song...");
+                let mut enigo = Enigo::new();
+                enigo.key_click(Key::MediaNextTrack);
+            }
+
+            // Delegate to the appropriate profile's message handler
+            match *profile {
+                Profile::Default => profiles::default::handle_message(message),
+                Profile::Genshin => profiles::genshin::handle_message(message),
+                _ => {},
+            }
+        }, ())?;
+
+        println!("Connected. Monitoring for disconnection...");
+
+        // Monitor connection in a block to allow for connection closure
+        {
+            let midi_in_check = MidiInput::new("midi_checker")?;
+            let mut is_connected = true;
+            while is_connected {
+                thread::sleep(Duration::from_secs(1)); // Adjust based on desired responsiveness
+
+                if midi_in_check.ports().is_empty() || !midi_in_check.ports().contains(in_port) {
+                    println!("MIDI device disconnected.");
+                    is_connected = false; // Exit the monitoring loop
+                }
+            }
+        } // `midi_in_check` goes out of scope and is dropped here
+
+        // Properly close the connection before attempting to reconnect
+        connection.close();
+        println!("Attempting to reconnect...");
     }
-
-    // Now that we have a MIDI input port, continue with the rest of the program
-    let in_port = in_port.unwrap(); // Safe to unwrap here due to the loop's logic
-    println!("Listening on {}", midi_in.port_name(&in_port)?);
-
-    let current_profile = Arc::new(Mutex::new(Profile::Default));
-
-    let profile_for_closure = current_profile.clone();
-    let _conn_in = midi_in.connect(&in_port, "midi_reader", move |_, message, _| {
-        let mut profile = profile_for_closure.lock().unwrap();
-        println!("{:?}", message);
-        // Volume Control
-        if message[0] == 176 && message[1] == 70 {
-            let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-            //println!("Setting system volume to: {}", midi_volume * 100.0);
-            // match set_system_volume(midi_volume) {
-            //     Ok(_) => println!("Volume set successfully"),
-            //     Err(e) => println!("Failed to set volume: HRESULT {}", e),
-            // }
-            match set_system_volume(midi_volume){
-                Ok(_) => {},
-                Err(_e) => {},
-            };
-        }
-        // Check if the MIDI message should trigger a profile change
-        if message[0] == 153 && message[1] == 43 {
-            *profile = match *profile {
-                Profile::Default => Profile::Genshin,
-                Profile::Genshin => Profile::Sky,
-                Profile::Sky => Profile::Default,
-            };
-            let profile_name = format!("{}", *profile); // Convert the profile to a string
-            show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
-            //println!("Current profile: {}", profile_name); // Use if needed for debugging
-        }
-        if message[0] == 153 && message[1] == 39 {
-            // Launch TIDAL
-            //println!("Launching Tidal...");
-            let _ = Command::new("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe")
-                .spawn()
-                .expect("TIDAL launch failed");
-        }
-
-        // Go to the previous song on specific MIDI message
-        if message[0] == 153 && message[1] == 36 {
-            //n!("Playing previous song...");
-            let mut enigo = Enigo::new();
-            enigo.key_click(Key::MediaPrevTrack);
-        }
-
-        if message[0] == 153 && message[1] == 37 {
-            // Simulate play/pause key press
-            //println!("Toggling play/pause...");
-            let mut enigo = Enigo::new();
-            enigo.key_click(Key::MediaPlayPause);
-        }
-
-        // Go to the next song on specific MIDI message
-        if message[0] == 153 && message[1] == 38 {
-            //println!("Playing next song...");
-            let mut enigo = Enigo::new();
-            enigo.key_click(Key::MediaNextTrack);
-        }
-
-        // Delegate to the appropriate profile's message handler
-        match *profile {
-            Profile::Default => profiles::default::handle_message(message),
-            Profile::Genshin => profiles::genshin::handle_message(message),
-            _ => {},
-        }
-
-    }, ())?;
-
-    std::thread::park();
-
-    Ok(())
 }
