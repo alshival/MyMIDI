@@ -5,5 +5,3 @@ Code to use MIDI buttons as hot keys. Each button can be assigned a different ta
 Originally, I had written this program in Python, but it was a resource hog, so it as ported over to Rust. MyMIDI was written for the Akai MPK Mini Play and must be adapted for your device.
 <img src="https://github.com/alshival/MyMIDI/blob/main/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/IMG_20240405_1927445722.jpg">
-TO-DO:
-1. Currently, if you start the app without a MIDI plugged in, it will wait until it detects a device. But if you disconnect the device while it is running, the port will remain open. Need to add observer that watches if the MIDI is disconnected and closes the port then waits for a device to be plugged in.
