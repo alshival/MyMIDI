@@ -11,6 +11,7 @@ use winapi::um::endpointvolume::*;
 use winapi::um::mmdeviceapi::*;
 use std::ptr::null_mut;
 mod profiles;
+mod steelseries_sonar_api;
 use std::fmt;
 
 // Define IID_IMMDeviceEnumerator manually
@@ -118,6 +119,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         // Recreate the MidiInput object each loop iteration to avoid ownership issues
         let mut midi_in = MidiInput::new("midi_reader_input")?;
         midi_in.ignore(Ignore::None);
+        use steelseries_sonar_api::Sonar;
+        let mut sonar = Sonar::new(false,None)?;
 
         let current_profile = Arc::new(Mutex::new(Profile::Default));
 
@@ -139,18 +142,55 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Handle MIDI messages here
             println!("Received MIDI message: {:?}", message);
             // Volume Control
+            
             if message[0] == 176 && message[1] == 70 {
                 let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                //println!("Setting system volume to: {}", midi_volume * 100.0);
-                // match set_system_volume(midi_volume) {
-                //     Ok(_) => println!("Volume set successfully"),
-                //     Err(e) => println!("Failed to set volume: HRESULT {}", e),
-                // }
-                match set_system_volume(midi_volume){
-                    Ok(_) => {},
-                    Err(_e) => {},
-                };
+                sonar.set_volume_for_channel("master",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
             }
+
+            if message[0] == 176 && message[1] == 71 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("game",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
+            if message[0] == 176 && message[1] == 72 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("chatRender",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
+            if message[0] == 176 && message[1] == 73 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("media",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
             // Check if the MIDI message should trigger a profile change
             if message[0] == 153 && message[1] == 43 {
                 *profile = match *profile {

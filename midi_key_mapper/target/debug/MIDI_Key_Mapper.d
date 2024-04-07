@@ -1,1 +1,1 @@
-C:\MyMIDI\MIDI_Key_Mapper\target\debug\MIDI_Key_Mapper.exe: C:\MyMIDI\MIDI_Key_Mapper\src\main.rs
+C:\MyMIDI\midi_key_mapper\target\debug\midi_key_mapper.exe: C:\MyMIDI\midi_key_mapper\src\main.rs
