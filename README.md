@@ -6,6 +6,68 @@ Originally, I had written this program in Python, but it was a resource hog, so 
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240405_1927445722.jpg">
 
+Out of the box, it is set up for handling multi-channel audio via SteelSeries Sonar, though code is in place if you wish to adjust volume using standard windows. You'll have to comment out the lines of code that handle Sonar and uncomment the Windows volume control.
+
+<img src="https://github.com/alshival/MyMIDI/blob/main/media/Untitled%20video%20-%20Made%20with%20Clipchamp%20(1).gif">
+
+You can make the changes in `main.rs`. Look for these lines of code that handle the knobs:
+```
+// Master Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
+            if message[0] == 176 && message[1] == 70 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("master",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
+            // Game Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
+            if message[0] == 176 && message[1] == 71 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("game",midi_volume);
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
+            // Chat Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
+            if message[0] == 176 && message[1] == 72 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("chatRender",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+
+            // Media Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust this:
+            if message[0] == 176 && message[1] == 73 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("media",midi_volume);
+
+                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
+
+                // match set_system_volume(midi_volume){
+                //     Ok(_) => {},
+                //     Err(_e) => {},
+                // };
+            }
+```
+
 # Setup
 
 Navigate into `MyMIDI/my_midi` and run `cargo build --release`. I have it installed at `C:\MyMIDI`
