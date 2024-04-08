@@ -94,6 +94,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Handle MIDI messages here
             println!("Received MIDI message: {:?}", message);
 
+            /*###############################################################################
+            Profile Change Button
+                Dedicate a button to changing profiles
+            ###############################################################################*/
             // Check if the MIDI message should trigger a profile change
             if message[0] == 153 && message[1] == 43 {
                 *profile = match *profile {

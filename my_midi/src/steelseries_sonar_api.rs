@@ -4,6 +4,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use crate::toast; 
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CommonAppData {
@@ -103,29 +104,45 @@ impl Sonar {
         Ok(())
     }
 
-    /// Sets the volume for a specified channel, ensuring the web server address is updated beforehand.
-    pub fn set_volume_for_channel(&mut self, channel: &str, volume: f32) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn set_volume_for_channel(&mut self, channel: &str, volume: f32) {
         // First, ensure the web server address is up-to-date
-        self.update_web_server_address_from_sub_apps()?;
+        if let Err(e) = self.update_web_server_address_from_sub_apps() {
+            toast::show_toast("Volume Control Failed", &format!("Failed to update web server address: {}", e));
+            return;
+        }
         
         if !["master", "game", "chatRender", "media", "aux", "chatCapture"].contains(&channel) {
-            return Err("ChannelNotFoundError".into());
+            toast::show_toast("Volume Control Failed", "Channel not found");
+            return;
         }
-
+    
         if volume < 0.0 || volume > 1.0 {
-            return Err("InvalidVolumeError".into());
+            toast::show_toast("Volume Control Failed", "Invalid volume");
+            return;
         }
-
-        let client = Client::builder().danger_accept_invalid_certs(true).build()?;
+    
+        let client = match Client::builder().danger_accept_invalid_certs(true).build() {
+            Ok(client) => client,
+            Err(e) => {
+                toast::show_toast("Volume Control Failed", &format!("Failed to build client: {}", e));
+                return;
+            },
+        };
+    
         let url = format!("{}{}/{}/Volume/{}", self.web_server_address, self.volume_path, channel, volume);
-        let response = client.put(&url).send()?;
-
+        let response = match client.put(&url).send() {
+            Ok(response) => response,
+            Err(e) => {
+                toast::show_toast("Volume Control Failed", &format!("Failed to send request: {}", e));
+                return;
+            },
+        };
+    
         if response.status() != reqwest::StatusCode::OK {
-            return Err("ServerNotAccessibleError".into());
+            toast::show_toast("Volume Control Failed", "Server not accessible");
         }
-
-        Ok(())
     }
+    
     
     /// Fetches the /subApps response and updates the web server address.
     fn update_web_server_address_from_sub_apps(&mut self) -> Result<(), Box<dyn std::error::Error>> {
