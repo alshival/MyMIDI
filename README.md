@@ -67,6 +67,7 @@ You can make the changes in `main.rs`. Look for these lines of code that handle 
                 // };
             }
 ```
+<img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-08%2014365423.png">
 
 # Setup
 
