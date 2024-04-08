@@ -44,21 +44,33 @@ main.rs
 ###############################################################################*/
 fn main() -> Result<(), Box<dyn Error>> {
     loop {
-        // Recreate the MidiInput object each loop iteration to avoid ownership issues
-        let mut midi_in = MidiInput::new("midi_reader_input")?;
-        midi_in.ignore(Ignore::None);
-        use steelseries_sonar_api::Sonar;
-        let mut sonar = Sonar::new(false,None)?;
-
+        /*###############################################################################
+        Set default profile here.
+            Currently, the default profile is called Default
+        ###############################################################################*/
         let current_profile = Arc::new(Mutex::new(Profile::Default));
 
+        /*###############################################################################
+        SteelSeries Audio setup
+            If you are not using SteelSeries, you can comment this part out.
+        ###############################################################################*/    
+        use steelseries_sonar_api::Sonar;
+        let mut sonar = Sonar::new(false,None)?;
+        
+        /*###############################################################################
+        MIDI input reading
+        ###############################################################################*/
+        let mut midi_in = MidiInput::new("midi_reader_input")?;
+        midi_in.ignore(Ignore::None);
+
+        // This checks if there is a device open at startup. If there is none, the app waits.
         let ports = midi_in.ports();
         if ports.is_empty() {
             println!("No MIDI input ports available. Waiting for connection...");
             thread::sleep(Duration::from_secs(5));
             continue; // Skip the rest of the loop and check again
         }
-
+        // Choose the first MIDI device.
         let in_port = &ports[0]; // Assuming we want the first available port
         println!("Listening on {}", midi_in.port_name(in_port)?);
         // Clone the Arc for use in the closure
@@ -133,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 //windows_volume_control::set_system_volume(midi_volume);
             }
             /*###############################################################################
-            Media Keys
+            Cross-profile Button Assignment
                 Again, button assignments defined within this main.rs function persist
                 across profiles. I have three buttons assigned as media keys for 
                 Previous Track, Play/Pause, and Next Track
@@ -160,7 +172,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 enigo.key_click(Key::MediaNextTrack);
             }
             /*###############################################################################
-            Application Launch 
+            Cross-profile Application Launch Buttons
                 Again, button assignments defined within this main.rs function persist
                 across profiles. I have Tidal launch across all profiles.
             ###############################################################################*/
