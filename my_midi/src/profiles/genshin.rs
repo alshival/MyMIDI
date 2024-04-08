@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 use enigo::*;
-use std::process::Command;
 use crate::toast;
 
 // Define an enum to represent the current scale state

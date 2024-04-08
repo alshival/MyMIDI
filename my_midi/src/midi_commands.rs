@@ -1,5 +1,4 @@
 use std::process::Command;
-use std::io;
 use crate::toast;
 
 pub fn launch_exe(path: &str) {

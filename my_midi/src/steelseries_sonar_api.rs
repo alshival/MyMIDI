@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 use crate::toast; 
+use rusqlite::{Connection, Result as SqlResult};
+use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CommonAppData {
@@ -41,6 +43,28 @@ pub struct Sonar {
     volume_path: String,
     base_url: String,
     web_server_address: String,
+}
+
+/*###############################################################################
+Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
+This is the code to extract the mode from the SteelSeries database.
+If you aren't using SteelSeries Sonar for multi-channel audio, you can remove this safely
+as well as any SteelSeries code in the main() function.
+###############################################################################*/
+pub fn fetch_streamer_mode() -> SqlResult<bool> {
+    let db_path = Path::new("C:\\ProgramData\\SteelSeries\\GG\\apps\\sonar\\db\\database.db");
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("SELECT value FROM key_value WHERE key = 'MODE'")?;
+    let mut mode_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
+
+    if let Some(mode) = mode_iter.next() {
+        // If there's a result, compare it (case-insensitively) to "streamer"
+        Ok(mode?.to_lowercase() == "stream")
+    } else {
+        // If there's no result, default to false
+        Ok(false)
+    }
 }
 
 impl Sonar {

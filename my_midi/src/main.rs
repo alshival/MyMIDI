@@ -3,8 +3,6 @@ use std::{error::Error, thread, time::Duration};
 use enigo::*;
 use midir::{MidiInput, Ignore};
 use std::sync::{Arc, Mutex};
-use rusqlite::{Connection, Result as SqlResult};
-use std::path::Path;
 use std::fmt;
 // Custom mods
 mod profiles;
@@ -41,28 +39,6 @@ impl fmt::Display for Profile {
 }
 
 /*###############################################################################
-Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
-This is the code to extract the mode from the SteelSeries database.
-If you aren't using SteelSeries Sonar for multi-channel audio, you can remove this safely
-as well as any SteelSeries code in the main() function.
-###############################################################################*/
-fn fetch_streamer_mode() -> SqlResult<bool> {
-    let db_path = Path::new("C:\\ProgramData\\SteelSeries\\GG\\apps\\sonar\\db\\database.db");
-    let conn = Connection::open(db_path)?;
-
-    let mut stmt = conn.prepare("SELECT value FROM key_value WHERE key = 'MODE'")?;
-    let mut mode_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
-
-    if let Some(mode) = mode_iter.next() {
-        // If there's a result, compare it (case-insensitively) to "streamer"
-        Ok(mode?.to_lowercase() == "stream")
-    } else {
-        // If there's no result, default to false
-        Ok(false)
-    }
-}
-
-/*###############################################################################
 main.rs
     Any button assignments made within main.rs will persist across profiles.
 ###############################################################################*/
@@ -89,7 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let profile_for_closure = current_profile.clone();
 
         // The `connect` method consumes `midi_in`, so it's not available after this call
-        let mut connection = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
+        let connection = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
             let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
             // Handle MIDI messages here
             println!("Received MIDI message: {:?}", message);
