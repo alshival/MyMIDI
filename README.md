@@ -8,7 +8,7 @@ Originally, I had written this program in Python, but it was a resource hog, so 
 
 Out of the box, it is set up for handling multi-channel audio via SteelSeries Sonar, though code is in place if you wish to adjust volume using standard windows. You'll have to comment out the lines of code that handle Sonar and uncomment the Windows volume control.
 
-<img src="https://github.com/alshival/MyMIDI/blob/main/media/Untitled%20video%20-%20Made%20with%20Clipchamp%20(1).gif">
+<img src="https://github.com/alshival/MyMIDI/blob/main/media/demo.gif">
 
 You can make the changes in `main.rs`. Look for these lines of code that handle the knobs:
 ```
