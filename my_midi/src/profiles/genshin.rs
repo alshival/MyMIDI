@@ -2,30 +2,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use enigo::*;
 use std::process::Command;
-
-fn show_toast(title: &str, message: &str) {
-    let ps_script = format!(r#"
-[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
-$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-
-$textNodes = $template.GetElementsByTagName("text")
-$textNodes.Item(0).AppendChild($template.CreateTextNode("{title}")) > $null
-$textNodes.Item(1).AppendChild($template.CreateTextNode("{message}")) > $null
-
-$toast = [Windows.UI.Notifications.ToastNotification]::new($template)
-$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("MyMIDI")
-$notifier.Show($toast)
-"#, title = title, message = message);
-
-    Command::new("powershell")
-        .arg("-NoProfile")
-        .arg("-ExecutionPolicy")
-        .arg("Bypass")
-        .arg("-Command")
-        .arg(&ps_script)
-        .output()
-        .expect("Failed to execute process");
-}
+use crate::toast;
 
 // Define an enum to represent the current scale state
 enum ScaleType {
@@ -69,7 +46,7 @@ pub fn handle_message(message: &[u8]) {
             40 => {
                 let mut scale = CURRENT_SCALE.lock().unwrap();
                 *scale = ScaleType::Complete;
-                show_toast("Layout Change","Switched to complete scale");
+                toast::show_toast("Layout Change","Switched to complete scale");
                 //println!("Switched to complete scale");
             },
             41 => {
@@ -77,12 +54,12 @@ pub fn handle_message(message: &[u8]) {
                 *scale = match *scale {
                     ScaleType::Lows => {
                         //println!("Toggled to Highs");
-                        show_toast("Layout Change","Toggled to Highs");
+                        toast::show_toast("Layout Change","Toggled to Highs");
                         ScaleType::Highs
                     },
                     ScaleType::Highs | ScaleType::Complete => {
                         //println!("Toggled to Lows");
-                        show_toast("Layout Change","Toggled to Lows");
+                        toast::show_toast("Layout Change","Toggled to Lows");
                         ScaleType::Lows
                     },
                 };

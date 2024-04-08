@@ -10,9 +10,11 @@ use winapi::um::combaseapi::*;
 use winapi::um::endpointvolume::*;
 use winapi::um::mmdeviceapi::*;
 use std::ptr::null_mut;
+use std::fmt;
+// Custom mods
 mod profiles;
 mod steelseries_sonar_api;
-use std::fmt;
+mod toast;
 
 // Define IID_IMMDeviceEnumerator manually
 // This is the interface ID for IMMDeviceEnumerator
@@ -89,29 +91,6 @@ impl fmt::Display for Profile {
             Profile::Sky => "Sky",
         })
     }
-}
-fn show_toast(title: &str, message: &str) {
-    let ps_script = format!(r#"
-[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
-$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-
-$textNodes = $template.GetElementsByTagName("text")
-$textNodes.Item(0).AppendChild($template.CreateTextNode("{title}")) > $null
-$textNodes.Item(1).AppendChild($template.CreateTextNode("{message}")) > $null
-
-$toast = [Windows.UI.Notifications.ToastNotification]::new($template)
-$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("MyMIDI")
-$notifier.Show($toast)
-"#, title = title, message = message);
-
-    Command::new("powershell")
-        .arg("-NoProfile")
-        .arg("-ExecutionPolicy")
-        .arg("Bypass")
-        .arg("-Command")
-        .arg(&ps_script)
-        .output()
-        .expect("Failed to execute process");
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -199,7 +178,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Profile::Sky => Profile::Default,
                 };
                 let profile_name = format!("{}", *profile); // Convert the profile to a string
-                show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
+                toast::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
                 //println!("Current profile: {}", profile_name); // Use if needed for debugging
             }
             if message[0] == 153 && message[1] == 39 {
