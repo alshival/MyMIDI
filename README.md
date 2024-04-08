@@ -21,3 +21,4 @@ Set WshShell = CreateObject("WScript.Shell")
 WshShell.Run "C:\MyMIDI\my_midi\target\release\my_midi.exe & pause", 0, True
 Set WshShell = Nothing
 ```
+<img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-06%20194707.png">
