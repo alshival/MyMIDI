@@ -29,6 +29,17 @@ if message[0] == 176 && message[1] == 70 {
     //windows_volume_control::set_system_volume(midi_volume);
 }
 ```
+You can dedicate buttons to your favorite macros or your favorite applications. You can also specify these at the profile level. MyMIDI includes a module `midi_commands::launch_exe` for quickly setting this up.
+```
+/*###############################################################################
+Application Launch 
+    Again, any button assignments defined within this main.rs function persist
+    across profiles. I have Tidal launch across all profiles.
+###############################################################################*/
+if message[0] == 153 && message[1] == 39 {
+    midi_commands::launch_exe("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe");
+}
+```
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-08%2014365423.png">
 
 # Setup
