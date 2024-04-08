@@ -3,83 +3,27 @@ use std::{error::Error, thread, time::Duration};
 use enigo::*;
 use midir::{MidiInput, Ignore};
 use std::sync::{Arc, Mutex};
-use std::process::Command;
-extern crate winapi;
-use winapi::shared::winerror::*;
-use winapi::um::combaseapi::*;
-use winapi::um::endpointvolume::*;
-use winapi::um::mmdeviceapi::*;
-use std::ptr::null_mut;
 use rusqlite::{Connection, Result as SqlResult};
 use std::path::Path;
 use std::fmt;
 // Custom mods
 mod profiles;
 mod steelseries_sonar_api;
+mod windows_volume_control;
 mod toast;
+mod midi_commands;
 
 
-// Define IID_IMMDeviceEnumerator manually
-// This is the interface ID for IMMDeviceEnumerator
-#[allow(non_upper_case_globals)]
-const IID_IMMDeviceEnumerator: winapi::shared::guiddef::GUID = winapi::shared::guiddef::GUID {
-    Data1: 0xA95664D2,
-    Data2: 0x9614,
-    Data3: 0x4F35,
-    Data4: [0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6],
-};
-
-// Define IID_IAudioEndpointVolume manually
-// This is the interface ID for IAudioEndpointVolume
-#[allow(non_upper_case_globals)]
-const IID_IAudioEndpointVolume: winapi::shared::guiddef::GUID = winapi::shared::guiddef::GUID {
-    Data1: 0x5CDF2C82,
-    Data2: 0x841E,
-    Data3: 0x4546,
-    Data4: [0x97, 0x22, 0x0C, 0xF7, 0x40, 0x78, 0x22, 0x9A],
-};
-
-
-// Function to initialize COM library and get the audio endpoint volume interface
-fn get_audio_endpoint_volume() -> Result<*mut IAudioEndpointVolume, HRESULT> {
-    unsafe {
-        CoInitializeEx(null_mut(), COINITBASE_MULTITHREADED);
-        let mut device_enumerator: *mut IMMDeviceEnumerator = null_mut();
-        let hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, null_mut(), CLSCTX_ALL, &IID_IMMDeviceEnumerator, &mut device_enumerator as *mut _ as *mut _);
-        if SUCCEEDED(hr) {
-            let mut default_device: *mut IMMDevice = null_mut();
-            (*device_enumerator).GetDefaultAudioEndpoint(eRender, eConsole, &mut default_device);
-            let mut endpoint_volume: *mut IAudioEndpointVolume = null_mut();
-            (*default_device).Activate(&IID_IAudioEndpointVolume, CLSCTX_ALL, null_mut(), &mut endpoint_volume as *mut _ as *mut _);
-            (*device_enumerator).Release();
-            (*default_device).Release();
-            Ok(endpoint_volume)
-        } else {
-            Err(hr)
-        }
-    }
-}
-
-// Function to set the system volume
-fn set_system_volume(volume: f32) -> Result<(), HRESULT> {
-    let endpoint_volume = get_audio_endpoint_volume()?;
-    if !endpoint_volume.is_null() {
-        unsafe {
-            // Convert MIDI volume (0-127) to a percentage (0.0-1.0), then to decibels if needed
-            // Here we directly use the volume as a percentage
-            let hr = (*endpoint_volume).SetMasterVolumeLevelScalar(volume, null_mut());
-            (*endpoint_volume).Release();
-            if SUCCEEDED(hr) {
-                Ok(())
-            } else {
-                Err(hr)
-            }
-        }
-    } else {
-        Err(E_FAIL)
-    }
-}
-
+/*###############################################################################
+Profile Delegation
+Adding a new profile requires a few steps.
+    1. Create `src/profiles/profile_name.rs` with your logic to handle messages.
+    2. Add `pub mod profile_name;` to `src/profiles/mod.rs` so you can import it
+        into main.rs
+    3. Add to enum list in this next section.
+    4. Map the profile name to the handle_message function within main.rs.
+       (see near end of main.rs script)
+###############################################################################*/
 #[derive(Debug, Clone, Copy)]
 enum Profile {
     Default,
@@ -96,10 +40,12 @@ impl fmt::Display for Profile {
     }
 }
 
-// Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
-// This is the code to extract the mode from the SteelSeries database.
-// If you aren't using SteelSeries Sonar for multi-channel audio, you can remove this safely
-// as well as any SteelSeries code in the main() function.
+/*###############################################################################
+Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
+This is the code to extract the mode from the SteelSeries database.
+If you aren't using SteelSeries Sonar for multi-channel audio, you can remove this safely
+as well as any SteelSeries code in the main() function.
+###############################################################################*/
 fn fetch_streamer_mode() -> SqlResult<bool> {
     let db_path = Path::new("C:\\ProgramData\\SteelSeries\\GG\\apps\\sonar\\db\\database.db");
     let conn = Connection::open(db_path)?;
@@ -116,6 +62,10 @@ fn fetch_streamer_mode() -> SqlResult<bool> {
     }
 }
 
+/*###############################################################################
+main.rs
+    Any button assignments made within main.rs will persist across profiles.
+###############################################################################*/
 fn main() -> Result<(), Box<dyn Error>> {
     loop {
         // Recreate the MidiInput object each loop iteration to avoid ownership issues
@@ -143,61 +93,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
             // Handle MIDI messages here
             println!("Received MIDI message: {:?}", message);
-            
-            // Master Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 70 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("master",midi_volume);
-
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Game Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 71 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("game",midi_volume);
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Chat Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 72 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("chatRender",midi_volume);
-
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Media Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust this:
-            if message[0] == 176 && message[1] == 73 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("media",midi_volume);
-
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
 
             // Check if the MIDI message should trigger a profile change
             if message[0] == 153 && message[1] == 43 {
@@ -210,14 +105,59 @@ fn main() -> Result<(), Box<dyn Error>> {
                 toast::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
                 //println!("Current profile: {}", profile_name); // Use if needed for debugging
             }
-            if message[0] == 153 && message[1] == 39 {
-                // Launch TIDAL
-                //println!("Launching Tidal...");
-                let _ = Command::new("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe")
-                    .spawn()
-                    .expect("TIDAL launch failed");
+
+            /*###############################################################################
+            Volume Control
+                If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this.
+                Note that you can define volume control at the profile level by including it 
+                in the profile's `handle_message` function. This would allow you to reassign knobs
+                across different profiles. 
+            ###############################################################################*/
+            if message[0] == 176 && message[1] == 70 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                
+                // Using Sonar:
+                sonar.set_volume_for_channel("master",midi_volume);
+
+                // Using Windows:
+                //windows_volume_control::set_system_volume(midi_volume);
             }
 
+            // Game Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
+            if message[0] == 176 && message[1] == 71 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("game",midi_volume);
+
+                // Using Windows:
+                //windows_volume_control::set_system_volume(midi_volume);
+            }
+
+            // Chat Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
+            if message[0] == 176 && message[1] == 72 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("chatRender",midi_volume);
+
+                // Using Windows:
+                //windows_volume_control::set_system_volume(midi_volume);
+            }
+
+            // Media Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust this:
+            if message[0] == 176 && message[1] == 73 {
+                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+                sonar.set_volume_for_channel("media",midi_volume);
+
+                // Using Windows:
+                //windows_volume_control::set_system_volume(midi_volume);
+            }
+            /*###############################################################################
+            Media Keys
+                Again, anything button assignments defined within this main.rs function persist
+                across profiles. I have three buttons assigned as media keys for 
+                Previous Track, Play/Pause, and Next Track
+            ###############################################################################*/
             // Go to the previous song on specific MIDI message
             if message[0] == 153 && message[1] == 36 {
                 //n!("Playing previous song...");
@@ -225,6 +165,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 enigo.key_click(Key::MediaPrevTrack);
             }
 
+            // Play/Pause the music
             if message[0] == 153 && message[1] == 37 {
                 // Simulate play/pause key press
                 //println!("Toggling play/pause...");
@@ -238,7 +179,25 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let mut enigo = Enigo::new();
                 enigo.key_click(Key::MediaNextTrack);
             }
+            /*###############################################################################
+            Application Launch 
+                Again, anything button assignments defined within this main.rs function persist
+                across profiles. I have Tidal launch across all profiles.
+            ###############################################################################*/
+            if message[0] == 153 && message[1] == 39 {
+                midi_commands::launch_exe("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe");
+            }
 
+
+            /*###############################################################################
+            Profile Delegation
+                Adding a new profile requires a few steps.
+                    1. Create `src/profiles/profile_name.rs` with your logic to handle messages.
+                    2. Add `pub mod profile_name;` to `src/profiles/mod.rs` so you can import it
+                    into main.rs
+                    3. Add to enum list near the top of main.rs.
+                    4. Map the profile name to the handle_message function in this next section.
+            ###############################################################################*/
             // Delegate to the appropriate profile's message handler
             match *profile {
                 Profile::Default => profiles::default::handle_message(message),
@@ -249,6 +208,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         println!("Connected. Monitoring for disconnection...");
 
+        /*###############################################################################
+        Scheduled Tasks
+            This section includes code for routine maintenance. For example, there is code
+            that monitors whether the MIDI is disconnected, and if it is, it closes the port
+            and the app waits for another MIDI device to connect.
+        ###############################################################################*/
         // Monitor connection in a block to allow for connection closure
         {
             let midi_in_check = MidiInput::new("midi_checker")?;
