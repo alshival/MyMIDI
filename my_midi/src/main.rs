@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             /*###############################################################################
             Media Keys
-                Again, anything button assignments defined within this main.rs function persist
+                Again, button assignments defined within this main.rs function persist
                 across profiles. I have three buttons assigned as media keys for 
                 Previous Track, Play/Pause, and Next Track
             ###############################################################################*/
@@ -161,7 +161,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             /*###############################################################################
             Application Launch 
-                Again, anything button assignments defined within this main.rs function persist
+                Again, button assignments defined within this main.rs function persist
                 across profiles. I have Tidal launch across all profiles.
             ###############################################################################*/
             if message[0] == 153 && message[1] == 39 {
