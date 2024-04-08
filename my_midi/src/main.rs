@@ -98,6 +98,8 @@ impl fmt::Display for Profile {
 
 // Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
 // This is the code to extract the mode from the SteelSeries database.
+// If you aren't using SteelSeries Sonar for multi-channel audio, you can remove this safely
+// as well as any SteelSeries code in the main() function.
 fn fetch_streamer_mode() -> SqlResult<bool> {
     let db_path = Path::new("C:\\ProgramData\\SteelSeries\\GG\\apps\\sonar\\db\\database.db");
     let conn = Connection::open(db_path)?;
