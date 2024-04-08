@@ -53,6 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         /*###############################################################################
         SteelSeries Audio setup
             If you are not using SteelSeries, you can comment this part out.
+            I didn't want to run this each time I turn a knob, so I setup Sonar here.
         ###############################################################################*/    
         use steelseries_sonar_api::Sonar;
         let mut sonar = Sonar::new(false,None)?;
