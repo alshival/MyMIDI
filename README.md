@@ -1,7 +1,7 @@
 # MyMIDI
 Read about this project on [Substack](https://alshival.substack.com/p/a-coders-guide-to-midi-driven-hotkeys).
 
-Code to use MIDI buttons as hot keys. Each button can be assigned a different task. This code is meant to serve as a sort of template, as much of it will be dependent on your preferred MIDI device and what tasks you wish to assign each button.
+Code to use MIDI buttons as hot keys. Each button can be assigned a different task or macro. Supports multiple profiles. This code is meant to serve as a sort of template, as much of it will be dependent on your preferred MIDI device and what tasks you wish to assign each button.
 Originally, I had written this program in Python, but it was a resource hog, so it was ported over to Rust. It is light enough now to keep running in the background. MyMIDI was written for the Akai MPK Mini Play and must be adapted for your device.
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240405_1927445722.jpg">
@@ -12,60 +12,22 @@ Out of the box, it is set up for handling multi-channel audio via SteelSeries So
 
 You can make the changes in `main.rs`. Look for these lines of code that handle the knobs:
 ```
-// Master Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 70 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("master",midi_volume);
+/*###############################################################################
+Volume Control
+    If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this.
+    Note that you can define volume control at the profile level by including it 
+    in the profile's `handle_message` function. This would allow you to reassign knobs
+    across different profiles. 
+###############################################################################*/
+if message[0] == 176 && message[1] == 70 {
+    let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
+    
+    // Using Sonar:
+    sonar.set_volume_for_channel("master",midi_volume);
 
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Game Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 71 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("game",midi_volume);
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Chat Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
-            if message[0] == 176 && message[1] == 72 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("chatRender",midi_volume);
-
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
-
-            // Media Channel Volume
-            // If you don't want to use SteelSeries Sonar, you'll have to adjust this:
-            if message[0] == 176 && message[1] == 73 {
-                let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
-                sonar.set_volume_for_channel("media",midi_volume);
-
-                // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
-
-                // match set_system_volume(midi_volume){
-                //     Ok(_) => {},
-                //     Err(_e) => {},
-                // };
-            }
+    // Using Windows:
+    //windows_volume_control::set_system_volume(midi_volume);
+}
 ```
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-08%2014365423.png">
 
