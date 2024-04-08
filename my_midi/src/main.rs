@@ -10,11 +10,14 @@ use winapi::um::combaseapi::*;
 use winapi::um::endpointvolume::*;
 use winapi::um::mmdeviceapi::*;
 use std::ptr::null_mut;
+use rusqlite::{Connection, Result as SqlResult};
+use std::path::Path;
 use std::fmt;
 // Custom mods
 mod profiles;
 mod steelseries_sonar_api;
 mod toast;
+
 
 // Define IID_IMMDeviceEnumerator manually
 // This is the interface ID for IMMDeviceEnumerator
@@ -90,6 +93,24 @@ impl fmt::Display for Profile {
             Profile::Genshin => "Genshin",
             Profile::Sky => "Sky",
         })
+    }
+}
+
+// Currently, SteelSeries Sonar Streamer Mode is not functional, but it is a work in progress. 
+// This is the code to extract the mode from the SteelSeries database.
+fn fetch_streamer_mode() -> SqlResult<bool> {
+    let db_path = Path::new("C:\\ProgramData\\SteelSeries\\GG\\apps\\sonar\\db\\database.db");
+    let conn = Connection::open(db_path)?;
+
+    let mut stmt = conn.prepare("SELECT value FROM key_value WHERE key = 'MODE'")?;
+    let mut mode_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
+
+    if let Some(mode) = mode_iter.next() {
+        // If there's a result, compare it (case-insensitively) to "streamer"
+        Ok(mode?.to_lowercase() == "stream")
+    } else {
+        // If there's no result, default to false
+        Ok(false)
     }
 }
 
