@@ -120,8 +120,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
             // Handle MIDI messages here
             println!("Received MIDI message: {:?}", message);
-            // Volume Control
             
+            // Master Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
             if message[0] == 176 && message[1] == 70 {
                 let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
                 sonar.set_volume_for_channel("master",midi_volume);
@@ -134,10 +135,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // };
             }
 
+            // Game Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
             if message[0] == 176 && message[1] == 71 {
                 let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
                 sonar.set_volume_for_channel("game",midi_volume);
-
                 // If you don't want to use Steelseries Sonar, then comment out the above and uncomment this next part.
 
                 // match set_system_volume(midi_volume){
@@ -146,6 +148,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // };
             }
 
+            // Chat Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this:
             if message[0] == 176 && message[1] == 72 {
                 let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
                 sonar.set_volume_for_channel("chatRender",midi_volume);
@@ -158,6 +162,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // };
             }
 
+            // Media Channel Volume
+            // If you don't want to use SteelSeries Sonar, you'll have to adjust this:
             if message[0] == 176 && message[1] == 73 {
                 let midi_volume = message[2] as f32 / 127.0; // Convert MIDI volume to a float in range 0.0 to 1.0
                 sonar.set_volume_for_channel("media",midi_volume);
