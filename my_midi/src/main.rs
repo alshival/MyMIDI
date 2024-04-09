@@ -1,6 +1,9 @@
 use std::{error::Error, thread, time::Duration};
 #[macro_use] extern crate lazy_static;
-use enigo::*;
+use enigo::{
+    Direction::Click,
+    Enigo, Key, Keyboard, Settings,
+};
 use midir::{MidiInput, Ignore};
 use std::sync::{Arc, Mutex};
 use std::env;
@@ -45,12 +48,16 @@ main.rs
 ###############################################################################*/
 fn main() -> Result<(), Box<dyn Error>> {
     loop {
+
         /*###############################################################################
         Set default profile here.
             Currently, the default profile is called Default
         ###############################################################################*/
         let current_profile = Arc::new(Mutex::new(Profile::Default));
+
+        // Used for relative paths in template code.
         let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
+        
         /*###############################################################################
         SteelSeries Audio setup
             If you are not using SteelSeries, you can comment this part out.
@@ -74,6 +81,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         // Choose the first MIDI device.
         let in_port = &ports[0]; // Assuming we want the first available port
+        toast::show_toast("MyMIDI", &format!("Listening on {}",midi_in.port_name(in_port)?));
         println!("Listening on {}", midi_in.port_name(in_port)?);
         // Clone the Arc for use in the closure
         let profile_for_closure = current_profile.clone();
@@ -155,23 +163,23 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Go to the previous song on specific MIDI message
             if message[0] == 153 && message[1] == 36 {
                 //n!("Playing previous song...");
-                let mut enigo = Enigo::new();
-                enigo.key_click(Key::MediaPrevTrack);
+                let mut enigo = Enigo::new(&Settings::default()).unwrap();
+                enigo.key(Key::MediaPrevTrack,Click);
             }
 
             // Play/Pause the music
             if message[0] == 153 && message[1] == 37 {
                 // Simulate play/pause key press
                 //println!("Toggling play/pause...");
-                let mut enigo = Enigo::new();
-                enigo.key_click(Key::MediaPlayPause);
+                let mut enigo = Enigo::new(&Settings::default()).unwrap();
+                enigo.key(Key::MediaPlayPause,Click);
             }
 
             // Go to the next song on specific MIDI message
             if message[0] == 153 && message[1] == 38 {
                 //println!("Playing next song...");
-                let mut enigo = Enigo::new();
-                enigo.key_click(Key::MediaNextTrack);
+                let mut enigo = Enigo::new(&Settings::default()).unwrap();
+                enigo.key(Key::MediaNextTrack,Click);
             }
             /*###############################################################################
             Cross-profile Application Launch Buttons
@@ -180,6 +188,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             ###############################################################################*/
             if message[0] == 153 && message[1] == 39 {
                 let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
+                // Note that setting path like this does NOT return an object of type &str. It returns a string, so we add &path when passing it to launch_exe
+                // If we had instead done this:
+                // let path = "your/path/here"
+                // without using format, you wouldn't need to add an & before passing it to launch_exe
                 midi_commands::launch_exe(&path);
             }
 
@@ -219,6 +231,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 if midi_in_check.ports().is_empty() || !midi_in_check.ports().contains(in_port) {
                     println!("MIDI device disconnected.");
+                    toast::show_toast("MyMIDI", "MIDI disconnected. Standing by.");
                     is_connected = false; // Exit the monitoring loop
                 }
             }

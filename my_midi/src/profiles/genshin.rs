@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
-use enigo::*;
+use std::env;
+use enigo::{
+    Direction::Click,
+    Enigo, Key, Keyboard,Settings,
+};
 use crate::toast;
 
 // Define an enum to represent the current scale state
@@ -28,7 +32,10 @@ lazy_static! {
 }
 
 pub fn handle_message(message: &[u8]) {
-    let mut enigo = Enigo::new();
+    let mut enigo = Enigo::new(&Settings::default()).unwrap();
+    
+    // Used for relative paths in template code.
+    let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
 
     // Determine the current scale and directly work with its lock guard
     let scale_guard = match *CURRENT_SCALE.lock().unwrap() {
@@ -37,45 +44,47 @@ pub fn handle_message(message: &[u8]) {
         ScaleType::Complete => COMPLETE.lock().unwrap(),
     };
 
-    if message[0] >= 144 && message[0] <= 159 && message[2] != 0 { // Adjust channel checking as needed
-        let note = message[1]; // MIDI note number
-
-        // Handling special notes for changing scales or other actions
+    if message[0] == 144 && message[2] != 0 { //message[2] is velocity. Not really needed, though including it anyways.
+        let note = message[1];
         match note {
-            40 => {
-                let mut scale = CURRENT_SCALE.lock().unwrap();
-                *scale = ScaleType::Complete;
-                toast::show_toast("Layout Change","Switched to complete scale");
-                //println!("Switched to complete scale");
-            },
-            41 => {
-                let mut scale = CURRENT_SCALE.lock().unwrap();
-                *scale = match *scale {
-                    ScaleType::Lows => {
-                        //println!("Toggled to Highs");
-                        toast::show_toast("Layout Change","Toggled to Highs");
-                        ScaleType::Highs
-                    },
-                    ScaleType::Highs | ScaleType::Complete => {
-                        //println!("Toggled to Lows");
-                        toast::show_toast("Layout Change","Toggled to Lows");
-                        ScaleType::Lows
-                    },
-                };
-            },
-            42 => {
-                // Simulate pressing Alt + S
-                enigo.key_down(Key::Alt);
-                enigo.key_click(Key::Layout('s'));
-                enigo.key_up(Key::Alt);
-                //println!("Simulated Alt+S press");
-            },
             _ => {
                 if let Some(&key_char) = scale_guard.get(&note) {
-                    enigo.key_click(Key::Layout(key_char));
+                    enigo.key(Key::Unicode(key_char),Click);
                     //println!("Pressed key: {}", key_char);
                 }
             }
         }
+    }
+
+    if message[0] == 153 { // Adjust channel checking as needed
+        let note = message[1]; // MIDI note number
+
+        if note == 40 {
+            let mut scale = CURRENT_SCALE.lock().unwrap();
+            *scale = ScaleType::Complete;
+            toast::show_toast("Layout Change","Switched to complete scale");
+            //println!("Switched to complete scale");
+        }
+
+        if note == 41 {
+            let mut scale = CURRENT_SCALE.lock().unwrap();
+            *scale = match *scale {
+                ScaleType::Lows => {
+                    //println!("Toggled to Highs");
+                    toast::show_toast("Layout Change","Toggled to Highs");
+                    ScaleType::Highs
+                },
+                ScaleType::Highs | ScaleType::Complete => {
+                    //println!("Toggled to Lows");
+                    toast::show_toast("Layout Change","Toggled to Lows");
+                    ScaleType::Lows
+                },
+            };
+        }
+
+        if note == 42 {
+            let path = format!("C:\\Users\\{}\\AppData\\Local\\Discord\\app-1.0.9039",username);
+        }
+        // Handling special notes for changing scales or other actions
     }
 }
