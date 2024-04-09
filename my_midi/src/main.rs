@@ -3,6 +3,7 @@ use std::{error::Error, thread, time::Duration};
 use enigo::*;
 use midir::{MidiInput, Ignore};
 use std::sync::{Arc, Mutex};
+use std::env;
 use std::fmt;
 // Custom mods
 mod profiles;
@@ -49,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Currently, the default profile is called Default
         ###############################################################################*/
         let current_profile = Arc::new(Mutex::new(Profile::Default));
-
+        let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
         /*###############################################################################
         SteelSeries Audio setup
             If you are not using SteelSeries, you can comment this part out.
@@ -178,8 +179,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 across profiles. I have Tidal launch across all profiles.
             ###############################################################################*/
             if message[0] == 153 && message[1] == 39 {
-                midi_commands::launch_exe("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe");
+                let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
+                midi_commands::launch_exe(&path);
             }
+
 
 
             /*###############################################################################
