@@ -3,12 +3,6 @@ name = "my_midi"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-name = "my_midi"
-path = "src/main.rs"
-# This line hides the console window
-windows_subsystem = "windows"
-
 [dependencies]
 midir = { git = "https://github.com/Boddlnagg/midir", branch = "master" }
 enigo = { git = "https://github.com/enigo-rs/enigo" }
