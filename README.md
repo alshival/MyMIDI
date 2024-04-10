@@ -51,10 +51,12 @@ cd C:\MyMIDI\my_midi\
 cargo build --release
 ```
 
-The script `run_silently.vbs` opens MyMIDI in the background. You can use this .vbs with Task Scheduler so that MyMIDI opens when you log on. You will have to point the script to the release file you just built, wherever you decide to install MyMIDI:
+This creates the file `C:\MyMIDI\my_midi\target\release\my_midi.exe`. The script `run_silently.vbs` opens MyMIDI in the background. You can use this .vbs with Task Scheduler so that MyMIDI opens when you log on. You will have to point the script to the release file you just built, wherever you decide to install MyMIDI:
 ```
 Set WshShell = CreateObject("WScript.Shell")
 WshShell.Run "C:\MyMIDI\my_midi\target\release\my_midi.exe & pause", 0, True
 Set WshShell = Nothing
 ```
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-06%20194707.png">
+
+Note that when Task Scheduler runs this .vbs script, it starts a separate process that runs `C:\MyMIDI\my_midi\target\release\my_midi.exe`, so ending the process through Task Scheduler will not kill `my_midi.exe`. You will have to end the process in Task Manager as well. If you have any problems with MyMIDI starting, check if there is a zombie process in Task Manager. It may be keeping the MIDI port open.
