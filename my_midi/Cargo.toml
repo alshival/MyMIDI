@@ -3,7 +3,11 @@ name = "my_midi"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "my_midi"
+path = "src/main.rs"
+# This line hides the console window
+windows_subsystem = "windows"
 
 [dependencies]
 midir = { git = "https://github.com/Boddlnagg/midir", branch = "master" }
@@ -19,3 +23,4 @@ thiserror = "1.0"
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 rusqlite = { version = "0.26.0", features = ["bundled"] }
 notify = "6.1.1"
+ctrlc = "3.1.7"
