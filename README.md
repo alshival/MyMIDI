@@ -6,7 +6,7 @@ Code to use MIDI buttons as hot keys. Each button can be assigned a different ta
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240405_1927445722.jpg">
 
-Originally, I had written this program in Python, but it was a resource hog (12% CPU & 400MB Memory), so it was ported over to Rust (0% CPU & 1.5MB Memory).
+Originally, MyMIDI was written in Python, but it was a resource hog (12% CPU & 400MB Memory), so it was ported over to Rust (0% CPU & 1.5MB Memory).
 
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-11%20172522.png">
 
