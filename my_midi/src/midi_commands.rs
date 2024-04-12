@@ -1,5 +1,6 @@
 use std::process::Command;
 use crate::toast;
+use webbrowser;
 
 pub fn launch_exe(path: &str) {
     match Command::new(path).spawn() {
@@ -11,6 +12,11 @@ pub fn launch_exe(path: &str) {
     }
 }
 
+pub fn open_url(url: &str) -> Result<(),webbrowser::ParseBrowserError> {
+    // Open the URL using the user's default web browser
+    webbrowser::open(url);
+    Ok(())
+}
 
 // Example usage:
 // fn main() {

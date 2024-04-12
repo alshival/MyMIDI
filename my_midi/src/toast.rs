@@ -1,4 +1,3 @@
-
 use std::process::Command;
 
 pub fn show_toast(title: &str, message: &str) {

@@ -6,6 +6,7 @@ use enigo::{
     Enigo, Key, Keyboard,Settings,
 };
 use crate::toast;
+use crate::midi_commands;
 
 // Define an enum to represent the current scale state
 enum ScaleType {
@@ -61,30 +62,35 @@ pub fn handle_message(message: &[u8]) {
 
         if note == 40 {
             let mut scale = CURRENT_SCALE.lock().unwrap();
-            *scale = ScaleType::Complete;
-            toast::show_toast("Layout Change","Switched to complete scale");
-            //println!("Switched to complete scale");
-        }
-
-        if note == 41 {
-            let mut scale = CURRENT_SCALE.lock().unwrap();
             *scale = match *scale {
+                ScaleType::Complete => {
+                    //println!("Toggled to Complete Layout");
+                    toast::show_toast("Music Layout Change", "Toggled to Layout 2: Lows");
+                    ScaleType::Lows
+                },
                 ScaleType::Lows => {
                     //println!("Toggled to Highs");
-                    toast::show_toast("Layout Change","Toggled to Highs");
+                    toast::show_toast("Music Layout Change","Toggled to Layout 2: Highs");
                     ScaleType::Highs
                 },
-                ScaleType::Highs | ScaleType::Complete => {
+                ScaleType::Highs => {
                     //println!("Toggled to Lows");
-                    toast::show_toast("Layout Change","Toggled to Lows");
-                    ScaleType::Lows
+                    toast::show_toast("Music Layout Change","Toggled to Layout 1: Complete");
+                    ScaleType::Complete
                 },
             };
         }
 
-        if note == 42 {
-            let path = format!("C:\\Users\\{}\\AppData\\Local\\Discord\\app-1.0.9039",username);
+        if note == 41 {
+            // Open HoyoLab in a browser - For Daily Check ins
+            let url = "https://www.hoyolab.com/";
+            crate::midi_commands::open_url(url);
         }
-        // Handling special notes for changing scales or other actions
+
+        if note == 42 {
+            // Open Teyvat Map in a browser
+            let url = "https://act.hoyolab.com/ys/app/interactive-map/index.html?bbs_presentation_style=no_header&utm_id=2&utm_medium=tool&utm_source=hoyolab&bbs_theme=dark&bbs_theme_device=1&lang=en-us#/map/2?shown_types=&center=2008.50,-1084.00&zoom=-3.00";
+            crate::midi_commands::open_url(url);
+        }
     }
 }
