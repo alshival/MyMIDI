@@ -22,9 +22,8 @@ Music Layouts
     Note that some video games use raw input, which ignore simulated key presses, 
     meaning this approach will not work. One example is Sky: Children of the Light.
 
-    When we click a button using our MIDI, we obtain a signal of the 
-    form [144,48,37]. The first two numbers help you distinguish the button
-    being pressed. 
+    When we click a button using our MIDI, we obtain a signal of the form [144,48,37].
+    The first two numbers help you distinguish the button being pressed. 
     144 is related to the channel the button is on. Many buttons will be on that channel. 
     48 is the specific note. This is what we map in the section below to the letter 'z' on our keyboard:
         (48,'z') 
@@ -65,6 +64,7 @@ handle_message
     This is where you include all your logic for incoming messages for each button.
 ***************************************************************************** */
 pub fn handle_message(message: &[u8]) {
+    // Create a virtual keyboard for simulating key presses
     let mut enigo = Enigo::new(&Settings::default()).unwrap();
     // Used for relative paths in template code.
     let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
