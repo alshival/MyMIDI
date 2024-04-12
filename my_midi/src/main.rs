@@ -17,7 +17,7 @@ mod midi_commands;
 
 
 /*###############################################################################
-Profile Delegation
+Profile Delegation 
 Adding a new profile requires a few steps.
     1. Create `src/profiles/profile_name.rs` with your logic to handle messages.
     2. Add `pub mod profile_name;` to `src/profiles/mod.rs` so you can import it
@@ -43,10 +43,10 @@ impl fmt::Display for Profile {
     }
 }
 
-/*###############################################################################
+/******************************************************************************
 main.rs
     Any button assignments made within main.rs will persist across profiles.
-###############################################################################*/
+******************************************************************************/
 fn main() -> Result<(), Box<dyn Error>> {
     loop {
 
@@ -59,17 +59,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         // Used for relative paths in template code.
         let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
         
-        /*###############################################################################
+        /*******************************************************************************
         SteelSeries Audio setup
             If you are not using SteelSeries, you can comment this part out.
             I didn't want to run this each time I turn a knob, so I setup Sonar here.
-        ###############################################################################*/    
+        *******************************************************************************/    
         use steelseries_sonar_api::Sonar;
         let mut sonar = Sonar::new(false,None)?;
         
-        /*###############################################################################
+        /*******************************************************************************
         MIDI input reading
-        ###############################################################################*/
+        *******************************************************************************/
         let mut midi_in = MidiInput::new("midi_reader_input")?;
         midi_in.ignore(Ignore::None);
         let ports = midi_in.ports();
@@ -96,7 +96,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("Received MIDI message: {:?}", message);
 
             /*###############################################################################
-            Profile Change Button
+            Profile Change Button 
                 Dedicate a button to changing profiles
             ###############################################################################*/
             if message[0] == 153 && message[1] == 43 {
@@ -219,12 +219,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         println!("Connected. Monitoring for disconnection...");
 
-        /*###############################################################################
+        /*******************************************************************************
         Scheduled Tasks
             This section includes code for routine maintenance. For example, there is code
             that monitors whether the MIDI is disconnected, and if it is, it closes the port
             and the app waits for another MIDI device to connect.
-        ###############################################################################*/
+        *******************************************************************************/
         // Monitor connection in a block to allow for connection closure
         {
             let midi_in_check = MidiInput::new("midi_checker")?;
