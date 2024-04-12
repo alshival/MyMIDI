@@ -23,7 +23,8 @@ Adding a new profile requires a few steps.
     2. Add `pub mod profile_name;` to `src/profiles/mod.rs` so you can import it
         into main.rs
     3. Add to enum list in this next section.
-    4. Map the profile name to the handle_message function within main.rs.
+    4. Include it in the profile change button within the main() function.
+    5. Map the profile name to the handle_message function within the main() function.
        (see near end of main.rs script)
 ###############################################################################*/
 #[derive(Debug, Clone, Copy)]
@@ -71,22 +72,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         ###############################################################################*/
         let mut midi_in = MidiInput::new("midi_reader_input")?;
         midi_in.ignore(Ignore::None);
+        let ports = midi_in.ports();
 
         // This checks if there is a device open at startup. If there is none, the app waits.
-        let ports = midi_in.ports();
         if ports.is_empty() {
             println!("No MIDI input ports available. Waiting for connection...");
             thread::sleep(Duration::from_secs(5));
             continue; // Skip the rest of the loop and check again
         }
+
         // Choose the first MIDI device.
         let in_port = &ports[0]; // Assuming we want the first available port
+        // Let user know MyMIDI is listening for input
         toast::show_toast("MyMIDI", &format!("Listening on {}",midi_in.port_name(in_port)?));
         println!("Listening on {}", midi_in.port_name(in_port)?);
-        // Clone the Arc for use in the closure
-        let profile_for_closure = current_profile.clone();
 
-        // The `connect` method consumes `midi_in`, so it's not available after this call
+        // Clone the profile Arc for use in the closure
+        let profile_for_closure = current_profile.clone();
+        // The `connect` method consumes `midi_in`, so it's not available after this call.
         let connection = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
             let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
             // Handle MIDI messages here
@@ -96,8 +99,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             Profile Change Button
                 Dedicate a button to changing profiles
             ###############################################################################*/
-            // Check if the MIDI message should trigger a profile change
             if message[0] == 153 && message[1] == 43 {
+                // Cycle through the profiles: Default -> Genshin -> Sky (dummy profile) -> Default
                 *profile = match *profile {
                     Profile::Default => Profile::Genshin,
                     Profile::Genshin => Profile::Sky,
