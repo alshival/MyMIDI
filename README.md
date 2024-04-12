@@ -1,12 +1,16 @@
 # MyMIDI
 Read about this project on [Substack](https://alshival.substack.com/p/a-coders-guide-to-midi-driven-hotkeys).
 
-Code to use MIDI buttons as hot keys. Each button can be assigned a different task or macro. Supports multiple profiles. This code is meant to serve as a sort of template, as much of it will be dependent on your preferred MIDI device and what tasks you wish to assign each button.
-Originally, I had written this program in Python, but it was a resource hog, so it was ported over to Rust. It is light enough now to keep running in the background. MyMIDI was written for the Akai MPK Mini Play and must be adapted for your device.
+Code to use MIDI buttons as hot keys. Each button can be assigned a different task or macro. Supports multiple profiles. This code is meant to serve as a template, as much of it will be dependent on your preferred MIDI device and what tasks you wish to assign each button.
+
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240406_140035397.jpg">
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/IMG_20240405_1927445722.jpg">
 
-Out of the box, it is set up for handling multi-channel audio via SteelSeries Sonar, though code is in place if you wish to adjust volume using standard windows. You'll have to comment out the lines of code that handle Sonar and uncomment the Windows volume control. Currently, MyMIDI only supports SteelSeries Sonar on classic mode, meaning Sonar's Streamer Mode is not yet operational, though it is in the works.
+Originally, MyMIDI was written in Python, but it was a resource hog (12% CPU & 400MB Memory), so it was ported over to Rust (0% CPU & 1.5MB Memory).  It is light enough now to keep running in the background. 
+
+<img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-11%20172522.png">
+
+MyMIDI was written for the Akai MPK Mini Play and must be adapted for your device. Out of the box, it is set up for handling multi-channel audio via SteelSeries Sonar, though code is in place if you wish to adjust volume using standard windows. You'll have to comment out the lines of code that handle Sonar and uncomment the Windows volume control. Currently, MyMIDI only supports SteelSeries Sonar on classic mode, meaning Sonar's Streamer Mode is not yet operational, though it is in the works.
 
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/demo.gif">
 
