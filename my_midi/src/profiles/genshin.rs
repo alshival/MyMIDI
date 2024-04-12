@@ -8,13 +8,6 @@ use enigo::{
 use crate::toast;
 use crate::midi_commands;
 
-// Define an enum to represent the current scale state
-enum ScaleType {
-    Lows,
-    Highs,
-    Complete,
-}
-
 /*###############################################################################
 Music Layouts
     Genshin allows you to play music using the keyboard by clicking specific keys. 
@@ -36,7 +29,15 @@ Music Layouts
     the scale of C which does not use black keys. The 'Highs' and 'Lows' use only white keys,
     i.e. standards C scale, but do not cover all playable notes.
     You can define the default music layout in this section.
+    We use lazy_static method for caching. It contains CURRENT_SCALE, which holds
+    the currently selected music layout.
 ###############################################################################*/
+// Define an enum to represent the current scale state
+enum ScaleType {
+    Lows,
+    Highs,
+    Complete,
+}
 lazy_static! {
     // Layout 1: Complete
     static ref COMPLETE: Mutex<HashMap<u8, char>> = Mutex::new(HashMap::from([
@@ -72,7 +73,7 @@ pub fn handle_message(message: &[u8]) {
     /****************************************************************************** 
     This part is for switching between music layouts. If you only have one layout and don't need to switch,
     you can probably remove this.
-    Determine the current scale and directly work with its lock guard
+    Determine CURRENT_SCALE and directly work with its lock guard.
     ******************************************************************************/
     let scale_guard = match *CURRENT_SCALE.lock().unwrap() {
         ScaleType::Lows => LOWS.lock().unwrap(),
