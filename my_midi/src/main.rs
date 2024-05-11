@@ -84,8 +84,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         let in_port = &ports[0];
+        // Let user know MyMIDI is listening for input
+        midi_commands::show_toast("MyMIDI", &format!("Listening on {}",midi_in.port_name(in_port)?));
+        println!("Listening on {}", midi_in.port_name(in_port)?);
+        
         let button_states_clone = Arc::clone(&button_states);
-        let in_port_name = midi_in.port_name(in_port).unwrap();
         // Clone the profile Arc for use in the closure
         let profile_for_closure = current_profile.clone();
         
