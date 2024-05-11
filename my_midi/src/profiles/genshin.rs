@@ -1,13 +1,12 @@
+// genshin.rs
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::env;
 use enigo::{
-    Direction::Click,
+    Direction::{Click, Press, Release},
     Enigo, Key, Keyboard,Settings,
 };
-use crate::toast;
 use crate::midi_commands;
-
 /*###############################################################################
 Music Layouts
     Genshin allows you to play music using the keyboard by clicking specific keys. 
@@ -60,16 +59,7 @@ lazy_static! {
     static ref CURRENT_SCALE: Mutex<ScaleType> = Mutex::new(ScaleType::Complete);
 }
 
-/****************************************************************************** 
-handle_message
-    This is where you include all your logic for incoming messages for each button.
-***************************************************************************** */
-pub fn handle_message(message: &[u8]) {
-    // Create a virtual keyboard for simulating key presses
-    let mut enigo = Enigo::new(&Settings::default()).unwrap();
-    // Used for relative paths in template code.
-    let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
-
+pub fn handle_message(enigo: &mut Enigo, button_states: &mut HashMap<u8, bool>, message: &[u8]) {
     /****************************************************************************** 
     This part is for switching between music layouts. If you only have one layout and don't need to switch,
     you can probably remove this.
@@ -80,26 +70,6 @@ pub fn handle_message(message: &[u8]) {
         ScaleType::Highs => HIGHS.lock().unwrap(),
         ScaleType::Complete => COMPLETE.lock().unwrap(),
     };
-    /*###############################################################################
-    Map Piano Keys
-        When I press down on a piano key on my MIDI, I get a signal of the form [144,n,v], where v is nonzero.
-        When I release the piano key, I get another signal. Something like [136,n,0].
-        But I only care about when I press down on the button.
-        So, I check if the incoming message starts with 144 and has a nonzero velocity here.
-        Then n gets mapped to the letter using the music layout currently selected.
-    ###############################################################################*/
-    if message[0] == 144 && message[2] != 0 { //message[2] is velocity. Not really needed, though including it anyways.
-        let note = message[1];
-        match note { // Here, we match the note.
-            _ => {
-                if let Some(&key_char) = scale_guard.get(&note) { //If note is in our scale:
-                    enigo.key(Key::Unicode(key_char),Click); //click the key_char defined in the scale.
-                    //println!("Pressed key: {}", key_char);
-                }
-            }
-        }
-    }
-
     /*###############################################################################
     Button Assignment 
         Drum pad buttons on my MIDI send a signal of the form [153,n,v].
@@ -118,37 +88,52 @@ pub fn handle_message(message: &[u8]) {
             *scale = match *scale {
                 ScaleType::Complete => {
                     //println!("Toggled to Complete Layout");
-                    toast::show_toast("Music Layout Change", "Toggled to Layout 2: Lows");
+                    midi_commands::show_toast("Music Layout Change", "Toggled to Layout 2: Lows");
                     ScaleType::Lows
                 },
                 ScaleType::Lows => {
                     //println!("Toggled to Highs");
-                    toast::show_toast("Music Layout Change","Toggled to Layout 2: Highs");
+                    midi_commands::show_toast("Music Layout Change","Toggled to Layout 2: Highs");
                     ScaleType::Highs
                 },
                 ScaleType::Highs => {
                     //println!("Toggled to Lows");
-                    toast::show_toast("Music Layout Change","Toggled to Layout 1: Complete");
+                    midi_commands::show_toast("Music Layout Change","Toggled to Layout 1: Complete");
                     ScaleType::Complete
                 },
             };
         }
         /*###############################################################################
-        Button Assignment - HoyoLab
-            Launch HoyoLab in a browser. For daily checkins and things.
+        Drum Pad  Assignments
         ###############################################################################*/
+        // Launch HoyoLab in a browser. For daily checkins and things.
         if note == 41 {
             // Open HoyoLab in a browser - For Daily Check ins
             let url = "https://www.hoyolab.com/";
             crate::midi_commands::open_url(url);
         }
-        /*###############################################################################
-        Open Teyvat Map in a browser
-        ###############################################################################*/
+        // Open Teyvat Map in a browser
         if note == 42 {
             // Open Teyvat Map in a browser
             let url = "https://act.hoyolab.com/ys/app/interactive-map/index.html?bbs_presentation_style=no_header&utm_id=2&utm_medium=tool&utm_source=hoyolab&bbs_theme=dark&bbs_theme_device=1&lang=en-us#/map/2?shown_types=&center=2008.50,-1084.00&zoom=-3.00";
             crate::midi_commands::open_url(url);
+        }
+    }
+
+    let is_piano_pressed = message[0] == 144;
+    let is_piano_release = message[0] == 128;
+
+    if is_piano_pressed {
+        let note = message[1];
+        if let Some(&key) = scale_guard.get(&note) {
+            enigo.key(Key::Unicode(key), Press);
+            println!("Key '{}' pressed.", key);
+        }
+    } else if is_piano_release {
+        let note = message[1];
+        if let Some(&key) = scale_guard.get(&note) {
+            enigo.key(Key::Unicode(key), Release);
+            println!("Key '{}' released.", key);
         }
     }
 }

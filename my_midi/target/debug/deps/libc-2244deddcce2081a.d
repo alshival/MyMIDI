@@ -1,0 +1,11 @@
+C:\MyMIDI\my_midi_dev\target\debug\deps\liblibc-2244deddcce2081a.rmeta: C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\lib.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\macros.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\fixed_width_ints.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\mod.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\msvc\mod.rs
+
+C:\MyMIDI\my_midi_dev\target\debug\deps\liblibc-2244deddcce2081a.rlib: C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\lib.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\macros.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\fixed_width_ints.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\mod.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\msvc\mod.rs
+
+C:\MyMIDI\my_midi_dev\target\debug\deps\libc-2244deddcce2081a.d: C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\lib.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\macros.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\fixed_width_ints.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\mod.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\msvc\mod.rs
+
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\lib.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\macros.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\fixed_width_ints.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\mod.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\libc-0.2.154\src\windows\msvc\mod.rs:

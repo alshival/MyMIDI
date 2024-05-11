@@ -4,7 +4,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use crate::toast; 
+use crate::midi_commands; 
 use rusqlite::{Connection, Result as SqlResult};
 use std::path::Path;
 
@@ -131,24 +131,24 @@ impl Sonar {
     pub fn set_volume_for_channel(&mut self, channel: &str, volume: f32) {
         // First, ensure the web server address is up-to-date
         if let Err(e) = self.update_web_server_address_from_sub_apps() {
-            toast::show_toast("Volume Control Failed", &format!("Failed to update web server address: {}", e));
+            midi_commands::show_toast("Volume Control Failed", &format!("Failed to update web server address: {}", e));
             return;
         }
         
         if !["master", "game", "chatRender", "media", "aux", "chatCapture"].contains(&channel) {
-            toast::show_toast("Volume Control Failed", "Channel not found");
+            midi_commands::show_toast("Volume Control Failed", "Channel not found");
             return;
         }
     
         if volume < 0.0 || volume > 1.0 {
-            toast::show_toast("Volume Control Failed", "Invalid volume");
+            midi_commands::show_toast("Volume Control Failed", "Invalid volume");
             return;
         }
     
         let client = match Client::builder().danger_accept_invalid_certs(true).build() {
             Ok(client) => client,
             Err(e) => {
-                toast::show_toast("Volume Control Failed", &format!("Failed to build client: {}", e));
+                midi_commands::show_toast("Volume Control Failed", &format!("Failed to build client: {}", e));
                 return;
             },
         };
@@ -157,13 +157,13 @@ impl Sonar {
         let response = match client.put(&url).send() {
             Ok(response) => response,
             Err(e) => {
-                toast::show_toast("Volume Control Failed", &format!("Failed to send request: {}", e));
+                midi_commands::show_toast("Volume Control Failed", &format!("Failed to send request: {}", e));
                 return;
             },
         };
     
         if response.status() != reqwest::StatusCode::OK {
-            toast::show_toast("Volume Control Failed", "Server not accessible");
+            midi_commands::show_toast("Volume Control Failed", "Server not accessible");
         }
     }
     

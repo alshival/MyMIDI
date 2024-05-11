@@ -1,20 +1,17 @@
+use std::collections::HashMap;
 use std::{error::Error, thread, time::Duration};
 #[macro_use] extern crate lazy_static;
+use std::sync::{Arc, Mutex};
 use enigo::{
-    Direction::Click,
+    Direction::{Click,Press,Release},
     Enigo, Key, Keyboard, Settings,
 };
-use midir::{MidiInput, Ignore};
-use std::sync::{Arc, Mutex};
-use std::env;
 use std::fmt;
-// Custom mods
+use std::env;
+use midir::{MidiInput, Ignore};
 mod profiles;
 mod steelseries_sonar_api;
-mod windows_volume_control;
-mod toast;
 mod midi_commands;
-
 
 /*###############################################################################
 Profile Delegation 
@@ -43,13 +40,8 @@ impl fmt::Display for Profile {
     }
 }
 
-/******************************************************************************
-main.rs
-    Any button assignments made within main.rs will persist across profiles.
-******************************************************************************/
 fn main() -> Result<(), Box<dyn Error>> {
     loop {
-
         /*###############################################################################
         Set default profile here.
             Currently, the default profile is called Default
@@ -58,7 +50,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Used for relative paths in template code.
         let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
-        
+     
+        //let mut enigo = Enigo::new(&Settings::default()).unwrap();
         /*******************************************************************************
         SteelSeries Audio setup
             If you are not using SteelSeries, you can comment this part out.
@@ -67,12 +60,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         use steelseries_sonar_api::Sonar;
         let mut sonar = Sonar::new(false,None)?;
         
+        // button_states is used to sustain key presses. For example, in some rhythm games,
+        // you hold down a button for long notes. To accomplish this, we need to understand
+        // how our MIDI handles note-on/note-off buttons.
+        // My midi uses [144,x,y] for piano key note ons and [128,x,y] for piano key note offs.
+        // Since I am using the drum pad buttons for launching apps and things, I don't need those
+        // to sustain. 
+        let button_states: Arc<Mutex<HashMap<u8, bool>>> = Arc::new(Mutex::new(HashMap::new()));
+
         /*******************************************************************************
         MIDI input reading
         *******************************************************************************/
         let mut midi_in = MidiInput::new("midi_reader_input")?;
         midi_in.ignore(Ignore::None);
         let ports = midi_in.ports();
+        let mut enigo = Enigo::new(&Settings::default()).unwrap();
 
         // This checks if there is a device open at startup. If there is none, the app waits.
         if ports.is_empty() {
@@ -81,20 +83,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             continue; // Skip the rest of the loop and check again
         }
 
-        // Choose the first MIDI device.
-        let in_port = &ports[0]; // Assuming we want the first available port
-        // Let user know MyMIDI is listening for input
-        toast::show_toast("MyMIDI", &format!("Listening on {}",midi_in.port_name(in_port)?));
-        println!("Listening on {}", midi_in.port_name(in_port)?);
-
+        let in_port = &ports[0];
+        let button_states_clone = Arc::clone(&button_states);
+        let in_port_name = midi_in.port_name(in_port).unwrap();
         // Clone the profile Arc for use in the closure
         let profile_for_closure = current_profile.clone();
-        // The `connect` method consumes `midi_in`, so it's not available after this call.
-        let connection = midi_in.connect(in_port, "midi_reader", move |_, message, _| {
-            let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
-            // Handle MIDI messages here
+        
+        let mut connection = midi_in.connect(in_port, "midi_reader_input", move |_stamp, message, _| {
             println!("Received MIDI message: {:?}", message);
-
+            let mut profile = profile_for_closure.lock().unwrap(); // Lock the mutex and get the profile
             /*###############################################################################
             Profile Change Button 
                 Dedicate a button to changing profiles
@@ -107,10 +104,42 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Profile::Sky => Profile::Default,
                 };
                 let profile_name = format!("{}", *profile); // Convert the profile to a string
-                toast::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
+                midi_commands::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
                 //println!("Current profile: {}", profile_name); // Use if needed for debugging
             }
+            /*###############################################################################
+            Cross-profile Button Assignment
+                Again, button assignments defined within this main.rs function persist
+                across profiles. I have three buttons assigned as media keys for 
+                Previous Track, Play/Pause, and Next Track
+            ###############################################################################*/
+            // Go to the previous song on specific MIDI message
+            if message[0] == 153 && message[1] == 36 {
+                //n!("Playing previous song...");
+                enigo.key(Key::MediaPrevTrack,Click);
+            }
 
+            // Play/Pause the music
+            if message[0] == 153 && message[1] == 37 {
+                // Simulate play/pause key press
+                //println!("Toggling play/pause...");
+                enigo.key(Key::MediaPlayPause,Click);
+            }
+
+            // Go to the next song on specific MIDI message
+            if message[0] == 153 && message[1] == 38 {
+                //println!("Playing next song...");
+                enigo.key(Key::MediaNextTrack,Click);
+            }
+            // Launch music player
+            if message[0] == 153 && message[1] == 39 {
+                let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
+                // Note that setting path like this does NOT return an object of type &str. It returns a string, so we add &path when passing it to launch_exe
+                // If we had instead done this:
+                // let path = "your/path/here"
+                // without using format, you wouldn't need to add an & before passing it to launch_exe
+                midi_commands::launch_exe(&path);
+            }
             /*###############################################################################
             Volume Control
                 If you don't want to use SteelSeries Sonar, you'll have to adjust or delete this.
@@ -157,48 +186,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // Using Windows:
                 //windows_volume_control::set_system_volume(midi_volume);
             }
-            /*###############################################################################
-            Cross-profile Button Assignment
-                Again, button assignments defined within this main.rs function persist
-                across profiles. I have three buttons assigned as media keys for 
-                Previous Track, Play/Pause, and Next Track
-            ###############################################################################*/
-            // Go to the previous song on specific MIDI message
-            if message[0] == 153 && message[1] == 36 {
-                //n!("Playing previous song...");
-                let mut enigo = Enigo::new(&Settings::default()).unwrap();
-                enigo.key(Key::MediaPrevTrack,Click);
-            }
-
-            // Play/Pause the music
-            if message[0] == 153 && message[1] == 37 {
-                // Simulate play/pause key press
-                //println!("Toggling play/pause...");
-                let mut enigo = Enigo::new(&Settings::default()).unwrap();
-                enigo.key(Key::MediaPlayPause,Click);
-            }
-
-            // Go to the next song on specific MIDI message
-            if message[0] == 153 && message[1] == 38 {
-                //println!("Playing next song...");
-                let mut enigo = Enigo::new(&Settings::default()).unwrap();
-                enigo.key(Key::MediaNextTrack,Click);
-            }
-            /*###############################################################################
-            Cross-profile Application Launch Buttons
-                Again, button assignments defined within this main.rs function persist
-                across profiles. I have Tidal launch across all profiles.
-            ###############################################################################*/
-            if message[0] == 153 && message[1] == 39 {
-                let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
-                // Note that setting path like this does NOT return an object of type &str. It returns a string, so we add &path when passing it to launch_exe
-                // If we had instead done this:
-                // let path = "your/path/here"
-                // without using format, you wouldn't need to add an & before passing it to launch_exe
-                midi_commands::launch_exe(&path);
-            }
-
-
 
             /*###############################################################################
             Profile Delegation
@@ -212,13 +199,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Delegate to the appropriate profile's message handler
             match *profile {
                 Profile::Default => profiles::default::handle_message(message),
-                Profile::Genshin => profiles::genshin::handle_message(message),
+                Profile::Genshin => profiles::genshin::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
                 _ => {},
             }
         }, ())?;
 
         println!("Connected. Monitoring for disconnection...");
-
         /*******************************************************************************
         Scheduled Tasks
             This section includes code for routine maintenance. For example, there is code
@@ -234,7 +220,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 if midi_in_check.ports().is_empty() || !midi_in_check.ports().contains(in_port) {
                     println!("MIDI device disconnected.");
-                    toast::show_toast("MyMIDI", "MIDI disconnected. Standing by.");
+                    midi_commands::show_toast("MyMIDI", "MIDI disconnected. Standing by.");
                     is_connected = false; // Exit the monitoring loop
                 }
             }

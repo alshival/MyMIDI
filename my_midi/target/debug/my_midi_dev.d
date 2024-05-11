@@ -1,0 +1,1 @@
+C:\MyMIDI\my_midi_dev\target\debug\my_midi_dev.exe: C:\MyMIDI\my_midi_dev\src\main.rs C:\MyMIDI\my_midi_dev\src\midi_commands.rs C:\MyMIDI\my_midi_dev\src\profiles\default.rs C:\MyMIDI\my_midi_dev\src\profiles\genshin.rs C:\MyMIDI\my_midi_dev\src\profiles\mod.rs C:\MyMIDI\my_midi_dev\src\steelseries_sonar_api.rs

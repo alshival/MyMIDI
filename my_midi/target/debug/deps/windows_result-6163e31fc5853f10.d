@@ -1,0 +1,10 @@
+C:\MyMIDI\my_midi\target\debug\deps\libwindows_result-6163e31fc5853f10.rmeta: C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\lib.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\bindings.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\com.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\strings.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\error.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\hresult.rs
+
+C:\MyMIDI\my_midi\target\debug\deps\windows_result-6163e31fc5853f10.d: C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\lib.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\bindings.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\com.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\strings.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\error.rs C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\hresult.rs
+
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\lib.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\bindings.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\com.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\strings.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\error.rs:
+C:\Users\samue\.cargo\registry\src\index.crates.io-6f17d22bba15001f\windows-result-0.1.1\src\hresult.rs:
