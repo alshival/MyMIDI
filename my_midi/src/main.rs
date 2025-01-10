@@ -28,14 +28,14 @@ Adding a new profile requires a few steps.
 enum Profile {
     Default,
     Genshin,
-    Sky,
+    ZenlessZoneZero
 }
 impl fmt::Display for Profile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
             Profile::Default => "Default",
             Profile::Genshin => "Genshin",
-            Profile::Sky => "Sky",
+            Profile::ZenlessZoneZero => "ZenlessZoneZero",
         })
     }
 }
@@ -102,9 +102,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             if message[0] == 153 && message[1] == 43 {
                 // Cycle through the profiles: Default -> Genshin -> Sky (dummy profile) -> Default
                 *profile = match *profile {
-                    Profile::Default => Profile::Genshin,
-                    Profile::Genshin => Profile::Sky,
-                    Profile::Sky => Profile::Default,
+                    Profile::Default => Profile::ZenlessZoneZero,
+                    Profile::ZenlessZoneZero => Profile::Genshin,
+                    Profile::Genshin => Profile::Default,
                 };
                 let profile_name = format!("{}", *profile); // Convert the profile to a string
                 midi_commands::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
@@ -136,7 +136,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             // Launch music player
             if message[0] == 153 && message[1] == 39 {
-                let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
+                // Spotify
+                let path = format!(r"C:\\Users\\{}\\AppData\\Roaming\\Spotify\\Spotify.exe",username);
+                // Tidal
+                // let path = format!(r"C:\\Users\\{}\\AppData\\Local\\TIDAL\\TIDAL.exe",username);
                 // Note that setting path like this does NOT return an object of type &str. It returns a string, so we add &path when passing it to launch_exe
                 // If we had instead done this:
                 // let path = "your/path/here"
@@ -203,6 +206,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             match *profile {
                 Profile::Default => profiles::default::handle_message(message),
                 Profile::Genshin => profiles::genshin::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
+                Profile::ZenlessZoneZero => profiles::zenless_zone_zero::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
                 _ => {},
             }
         }, ())?;

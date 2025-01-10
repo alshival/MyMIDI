@@ -1,5 +1,5 @@
 [package]
-name = "my_midi_dev"
+name = "my_midi"
 version = "0.1.5"
 edition = "2021"
 

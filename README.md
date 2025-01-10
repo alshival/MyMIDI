@@ -40,10 +40,10 @@ You can dedicate buttons to your favorite macros or your favorite applications. 
 /*###############################################################################
 Application Launch 
     Again, any button assignments defined within this main.rs function persist
-    across profiles. I have Tidal launch across all profiles.
+    across profiles. I have Spotify launch across all profiles.
 ###############################################################################*/
 if message[0] == 153 && message[1] == 39 {
-    midi_commands::launch_exe("C:\\Users\\samue\\AppData\\Local\\TIDAL\\TIDAL.exe");
+    let path = format!(r"C:\\Users\\{}\\AppData\\Roaming\\Spotify\\Spotify.exe",username);
 }
 ```
 <img src="https://github.com/alshival/MyMIDI/blob/main/media/Screenshot%202024-04-08%2014365423.png">
