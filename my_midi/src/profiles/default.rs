@@ -6,7 +6,7 @@ pub fn handle_message(message: &[u8]) {
     
     // Launch Terminal Shortcut
     if message[0] == 153 && message[1] == 40 {
-        let path = "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminalPreview_1.20.10822.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe";
+        let path = "C:\\Program Files\\PuTTY\\putty.exe";
         // Note that setting path like this returns an object of type &str, which is what we need for launch_exe
         midi_commands::launch_exe(path);
     }

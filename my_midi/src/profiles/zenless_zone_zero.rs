@@ -40,5 +40,22 @@ pub fn handle_message(enigo: &mut Enigo, button_states: &mut HashMap<u8, bool>, 
             enigo.key(Key::Alt,Release).unwrap();
             print!("Screenshot taken.");
         }
+        if message[1] == 68 {
+            //Take a screenshot
+            enigo.key(Key::Alt,Press).unwrap();
+            enigo.key(Key::Unicode('q'),Click).unwrap();
+            enigo.key(Key::Alt,Release).unwrap();
+            print!("Screenshot taken.");
+        }
+
+        if message[1] == 70 {
+            // Start/stop recording (Win + Alt + R)
+            enigo.key(Key::Meta,Press).unwrap();
+            enigo.key(Key::Alt,Press).unwrap();
+            enigo.key(Key::Unicode('r'),Click).unwrap();
+            enigo.key(Key::Meta,Release).unwrap();
+            enigo.key(Key::Alt,Release).unwrap();
+            print!("Recording started/stopped.");
+        }
     }
 }

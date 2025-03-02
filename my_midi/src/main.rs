@@ -108,7 +108,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 };
                 let profile_name = format!("{}", *profile); // Convert the profile to a string
                 midi_commands::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
-                //println!("Current profile: {}", profile_name); // Use if needed for debugging
+                println!("Current profile: {}", profile_name); // Use if needed for debugging
             }
             /*###############################################################################
             Cross-profile Button Assignment
