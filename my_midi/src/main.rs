@@ -26,16 +26,18 @@ Adding a new profile requires a few steps.
 ###############################################################################*/
 #[derive(Debug, Clone, Copy)]
 enum Profile {
-    Default,
+    Dev,
     Genshin,
-    ZenlessZoneZero
+    ZenlessZoneZero,
+    Piano
 }
 impl fmt::Display for Profile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
-            Profile::Default => "Default",
+            Profile::Dev => "Dev",
             Profile::Genshin => "Genshin",
             Profile::ZenlessZoneZero => "ZenlessZoneZero",
+            Profile::Piano => "Piano",
         })
     }
 }
@@ -46,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Set default profile here.
             Currently, the default profile is called Default
         ###############################################################################*/
-        let current_profile = Arc::new(Mutex::new(Profile::Default));
+        let current_profile = Arc::new(Mutex::new(Profile::Dev));
 
         // Used for relative paths in template code.
         let username = env::var("USERNAME").unwrap_or_else(|_| String::from("default"));
@@ -102,9 +104,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             if message[0] == 153 && message[1] == 43 {
                 // Cycle through the profiles: Default -> Genshin -> Sky (dummy profile) -> Default
                 *profile = match *profile {
-                    Profile::Default => Profile::ZenlessZoneZero,
+                    Profile::Dev => Profile::ZenlessZoneZero,
                     Profile::ZenlessZoneZero => Profile::Genshin,
-                    Profile::Genshin => Profile::Default,
+                    Profile::Genshin => Profile::Piano,
+                    Profile::Piano => Profile::Dev,
                 };
                 let profile_name = format!("{}", *profile); // Convert the profile to a string
                 midi_commands::show_toast("Profile Changed", &format!("{} profile is now active.", profile_name));
@@ -204,7 +207,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ###############################################################################*/
             // Delegate to the appropriate profile's message handler
             match *profile {
-                Profile::Default => profiles::default::handle_message(message),
+                Profile::Dev => profiles::dev::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
                 Profile::Genshin => profiles::genshin::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
                 Profile::ZenlessZoneZero => profiles::zenless_zone_zero::handle_message(&mut enigo, &mut button_states_clone.lock().unwrap(), message),
                 _ => {},
